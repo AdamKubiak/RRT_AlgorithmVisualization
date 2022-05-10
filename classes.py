@@ -1,5 +1,5 @@
-from turtle import window_height
 import numpy as np
+import math
 import random
 import pygame
 import colorspy as color
@@ -65,10 +65,10 @@ class Map:
 class RRT(Map):
     def __init__(self,windowSize, startPos, endPos, obstSize,obstNum) -> None:
         Map.__init__(self,windowSize, startPos, endPos, obstSize,obstNum)
-        self.goalFlag = False
+        self.isFinished_ = False
         self.graphPoints_ = []
         self.parents_ = []
-        self.goalstate = None
+        self.finalPosition_ = None
         self.path = []
 
         self.graphPoints_.append(self.startPos_)
@@ -84,7 +84,7 @@ class RRT(Map):
         X = float(self.graphPoints_[id1][0] - self.graphPoints_[id2][0])
         Y = float(self.graphPoints_[id1][1] - self.graphPoints_[id2][1])
 
-        return np.sqrt(np.power(X)+np.power(Y))
+        return np.sqrt(np.power(X,2)+np.power(Y,2))
 
     def edgeAdd(self,parentId,childId):
         self.parents_.insert(childId,parentId)
@@ -129,6 +129,75 @@ class RRT(Map):
             self.nodeDelete(childId)
             return False
 
+    def measureNodeDistance(self,nodeId):
+        distanceMin = self.nodeDistance(0,nodeId)
+        nearestId = 0
+        for i in range(0,nodeId):
+            if self.nodeDistance(i,nodeId) < distanceMin:
+                nearestId = i
+                distanceMin = self.nodeDistance(i,nodeId)
+        return nearestId
+
+    #matma ;_;
+    def stepMove(self,nodeNearestId,nodeRandomId,stepSize = 10)->None:
+        distance = self.nodeDistance(nodeNearestId,nodeRandomId)
+
+        if distance > stepSize:
+            u = stepSize/distance
+
+            nodeNearestPosition = (self.graphPoints_[nodeNearestId][0],self.graphPoints_[nodeNearestId][1])
+            nodeRandomPosition = (self.graphPoints_[nodeRandomId][0],self.graphPoints_[nodeRandomId][1])
+
+            diffX = nodeRandomPosition[0] - nodeNearestPosition[0]
+            diffY = nodeRandomPosition[1] - nodeNearestPosition[1]
+
+            theta = math.atan2(diffY,diffX)
+
+            nodePosition = (int(nodeNearestPosition[0] + stepSize*math.cos(theta)),
+                            int(nodeNearestPosition[1]+stepSize*math.sin(theta)))
+            self.nodeDelete(nodeRandomId)
+
+            if abs(nodePosition[0] - self.endPos_[0])<stepSize and abs(nodeNearestPosition[1] - self.endPos_[1]) < stepSize:
+                self.nodeAdd(nodeRandomId,self.endPos_)
+                self.finalPosition_ = nodeRandomId
+                self.isFinished_ = True
+            
+            else:
+                self.nodeAdd(nodeRandomId,nodePosition)
+    
+    def moveToEndPos(self,nodeEndPosition):
+        tempId = len(self.graphPoints_)
+
+        self.nodeAdd(tempId,nodeEndPosition)
+
+        nearestToEndPos = self.measureNodeDistance(tempId)
+        self.stepMove(nearestToEndPos,tempId)
+        self.nodeConnection(nearestToEndPos,tempId)
+    
+    def expandTree(self):
+        tempId = len(self.graphPoints_)
+
+        randomNodePosition = self.randomDirectionPoint()
+        self.nodeAdd(tempId,randomNodePosition)
+
+        if self.nodeCollisionDetection():
+            nearestNode = self.measureNodeDistance(tempId)
+            self.stepMove(nearestNode,tempId)
+            self.nodeConnection(nearestNode,tempId)
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
 
 
 
@@ -144,21 +213,48 @@ class RRT(Map):
 def main():
     #map = Map((1000,600),(50,50),(510,510),30,100)
     rrt = RRT((1000,600),(50,50),(510,510),30,100)
-    print(rrt.graphPoints_)
+    #print(rrt.graphPoints_)
     rrt.drawScene()
-    while(True):
+    iteration = 0
+    #i = 0
+    """"
+    while True:
         x,y = rrt.randomDirectionPoint()
         id = len(rrt.graphPoints_)
         rrt.nodeAdd(len(rrt.graphPoints_),(x,y))
         rrt.edgeAdd(id-1,id)
-        if rrt.nodeCollisionDetection():
+        if rrt.nodeCollisionDetection() and rrt.edgeCollisionDetection(rrt.graphPoints_[id-1],rrt.graphPoints_[id]):
             pygame.draw.circle(rrt.WINDOW_,BLUE,rrt.graphPoints_[id],2,0)
-            if rrt.edgeCollisionDetection(rrt.graphPoints_[id-1],rrt.graphPoints_[id]):
-                pygame.draw.line(rrt.WINDOW_,PURPLE,rrt.graphPoints_[id-1],rrt.graphPoints_[id],2)
+            #if rrt.edgeCollisionDetection(rrt.graphPoints_[id-1],rrt.graphPoints_[id]):
+            pygame.draw.line(rrt.WINDOW_,PURPLE,rrt.graphPoints_[id-1],rrt.graphPoints_[id],2)
         pygame.display.update()
+        """
         
-    #print(len(map.obstaclesList_))
-    #print(map.obstNum_)
+        
+    while (iteration < 10000):
+        #id = len(rrt.graphPoints_)
+        if iteration % 5 == 0:
+            rrt.moveToEndPos(rrt.endPos_)
+            pygame.draw.circle(rrt.WINDOW_,BLUE,rrt.graphPoints_[-1],2,0)
+            pygame.draw.line(rrt.WINDOW_,PURPLE,rrt.graphPoints_[-1],rrt.graphPoints_[rrt.parents_[-1]],2)
+
+        else:
+            rrt.expandTree()
+            pygame.draw.circle(rrt.WINDOW_,BLUE,rrt.graphPoints_[-1],2,0)
+            pygame.draw.line(rrt.WINDOW_,PURPLE,rrt.graphPoints_[-1],rrt.graphPoints_[rrt.parents_[-1]],2)
+
+        if iteration % 5 == 0:
+            pygame.display.update()
+        iteration+=1
+
+        pygame.display.update()
+        #pygame.event.clear()
+        #pygame.event.wait(0)
+
+
+            
+
+
     
     pygame.event.clear()
     pygame.event.wait(0)
