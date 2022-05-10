@@ -30,7 +30,7 @@ class Map:
         
         pygame.init()
         self.WINDOW_ = pygame.display.set_mode(windowSize)
-        self.WINDOW_.fill(WHITE)
+        self.WINDOW_.fill(BLACK)
         pygame.display.set_caption('RRT Vis')
     #generowanie współrzędnych, dodanie do listy i rysowanie przeszkody
     def createRandomObstacles(self) -> None:
@@ -139,7 +139,7 @@ class RRT(Map):
         return nearestId
 
     #matma ;_;
-    def stepMove(self,nodeNearestId,nodeRandomId,stepSize = 5)->None:
+    def stepMove(self,nodeNearestId,nodeRandomId,stepSize = 7)->None:
         distance = self.nodeDistance(nodeNearestId,nodeRandomId)
 
         if distance > stepSize:
@@ -184,28 +184,27 @@ class RRT(Map):
             nearestNode = self.measureNodeDistance(tempId)
             self.stepMove(nearestNode,tempId)
             self.nodeConnection(nearestNode,tempId)
+    
+    def drawFinalPath(self):
+        positionId = len(self.graphPoints_) -1
+        while positionId >=0:
+            pygame.draw.circle(self.WINDOW_,RED,self.graphPoints_[positionId],2,0)
+            
+            tempPosition = positionId
+            positionId = self.parents_[positionId]
+            pygame.draw.line(self.WINDOW_,RED,self.graphPoints_[tempPosition],self.graphPoints_[positionId],2)
+            pygame.display.update()
+        
+        return True
+
+
 
 
 def main():
-    #map = Map((1000,600),(50,50),(510,510),30,100)
-    rrt = RRT((1000,1000),(50,50),(510,510),30,200)
-    #print(rrt.graphPoints_)
+    rrt = RRT((1000,600),(50,50),(510,510),30,200)
+    
     rrt.drawScene()
-    iteration = 0
-    #i = 0
-    """"
-    while True:
-        x,y = rrt.randomDirectionPoint()
-        id = len(rrt.graphPoints_)
-        rrt.nodeAdd(len(rrt.graphPoints_),(x,y))
-        rrt.edgeAdd(id-1,id)
-        if rrt.nodeCollisionDetection() and rrt.edgeCollisionDetection(rrt.graphPoints_[id-1],rrt.graphPoints_[id]):
-            pygame.draw.circle(rrt.WINDOW_,BLUE,rrt.graphPoints_[id],2,0)
-            #if rrt.edgeCollisionDetection(rrt.graphPoints_[id-1],rrt.graphPoints_[id]):
-            pygame.draw.line(rrt.WINDOW_,PURPLE,rrt.graphPoints_[id-1],rrt.graphPoints_[id],2)
-        pygame.display.update()
-        """
-        
+    iteration = 0     
         
     while (rrt.isFinished_ == False):
         #id = len(rrt.graphPoints_)
@@ -223,15 +222,12 @@ def main():
         iteration+=1
 
         pygame.display.update()
-        #pygame.event.clear()
-        #pygame.event.wait(0)
-    print(rrt.isFinished_)
 
+        
+    rrt.drawFinalPath()
+    print(len(rrt.graphPoints_))
+    print(len(rrt.parents_))
 
-            
-
-
-    
     pygame.event.clear()
     pygame.event.wait(0)
 
