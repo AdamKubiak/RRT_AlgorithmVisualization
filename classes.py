@@ -139,7 +139,7 @@ class RRT(Map):
         return nearestId
 
     #matma ;_;
-    def stepMove(self,nodeNearestId,nodeRandomId,stepSize = 10)->None:
+    def stepMove(self,nodeNearestId,nodeRandomId,stepSize = 5)->None:
         distance = self.nodeDistance(nodeNearestId,nodeRandomId)
 
         if distance > stepSize:
@@ -157,7 +157,7 @@ class RRT(Map):
                             int(nodeNearestPosition[1]+stepSize*math.sin(theta)))
             self.nodeDelete(nodeRandomId)
 
-            if abs(nodePosition[0] - self.endPos_[0])<stepSize and abs(nodeNearestPosition[1] - self.endPos_[1]) < stepSize:
+            if abs(nodePosition[0] - self.endPos_[0])<stepSize and abs(nodeNearestPosition[1] - self.endPos_[1]) <= 20:
                 self.nodeAdd(nodeRandomId,self.endPos_)
                 self.finalPosition_ = nodeRandomId
                 self.isFinished_ = True
@@ -186,33 +186,9 @@ class RRT(Map):
             self.nodeConnection(nearestNode,tempId)
 
 
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-        
-
-
 def main():
     #map = Map((1000,600),(50,50),(510,510),30,100)
-    rrt = RRT((1000,600),(50,50),(510,510),30,100)
+    rrt = RRT((1000,1000),(50,50),(510,510),30,200)
     #print(rrt.graphPoints_)
     rrt.drawScene()
     iteration = 0
@@ -231,25 +207,25 @@ def main():
         """
         
         
-    while (iteration < 10000):
+    while (rrt.isFinished_ == False):
         #id = len(rrt.graphPoints_)
-        if iteration % 5 == 0:
+        if iteration % 5 == 0 and rrt.isFinished_ == False:
             rrt.moveToEndPos(rrt.endPos_)
             pygame.draw.circle(rrt.WINDOW_,BLUE,rrt.graphPoints_[-1],2,0)
             pygame.draw.line(rrt.WINDOW_,PURPLE,rrt.graphPoints_[-1],rrt.graphPoints_[rrt.parents_[-1]],2)
+            pygame.display.update()
 
         else:
             rrt.expandTree()
             pygame.draw.circle(rrt.WINDOW_,BLUE,rrt.graphPoints_[-1],2,0)
             pygame.draw.line(rrt.WINDOW_,PURPLE,rrt.graphPoints_[-1],rrt.graphPoints_[rrt.parents_[-1]],2)
 
-        if iteration % 5 == 0:
-            pygame.display.update()
         iteration+=1
 
         pygame.display.update()
         #pygame.event.clear()
         #pygame.event.wait(0)
+    print(rrt.isFinished_)
 
 
             
