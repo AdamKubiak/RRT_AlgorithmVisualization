@@ -33,6 +33,7 @@ class Map:
         self.WINDOW_ = pygame.display.set_mode(windowSize)
         self.WINDOW_.fill(BLACK)
         pygame.display.set_caption('RRT Vis')
+        self.createRandomObstacles()
         
     def createRandomObstacles(self) -> None:
 
@@ -50,7 +51,7 @@ class Map:
         self.obstNum_ = len(self.obstaclesList_)
     
     def drawObstacles(self) -> None:
-        self.createRandomObstacles()
+        #self.createRandomObstacles()
         for rect in self.obstaclesList_:
             pygame.draw.rect(self.WINDOW_,GREEN,rect)
 
@@ -287,10 +288,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = 0
-        
-        #rrt.WINDOW_.fill(BLACK)
         robot.moveRobot(dt,rrt.path_)
         robot.drawRobot(rrt.WINDOW_)
+        rrt.drawObstacles()
         
         check = rrt.drawFinalPath()
         
